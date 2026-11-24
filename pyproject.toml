@@ -1,0 +1,24 @@
+[project]
+name = "fpa-variance-mcp"
+version = "0.1.0"
+description = "MCP server that drafts first-pass FP&A variance analysis across multiple ERPs, with data checks and a review gate."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = ["mcp>=2.3"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+fpa-variance-mcp = "fpa_variance_mcp.server:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
