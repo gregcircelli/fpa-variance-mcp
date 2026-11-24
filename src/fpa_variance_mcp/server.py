@@ -12,6 +12,7 @@ from typing import Literal
 
 from mcp.server.mcpserver import MCPServer
 
+from .export import export_report
 from .sample_data import build
 from .variance import DEFAULT_DB, FPAData, Thresholds
 
@@ -85,6 +86,28 @@ def run_checks(period: str) -> dict:
     """Pre-distribution checks: unmapped GL accounts, mapped actuals tie to raw GL,
     and divisions/regions roll up to consolidated."""
     return data().run_checks(period)
+
+
+@mcp.tool()
+def export_to_excel(
+    level: Level,
+    period: str,
+    name: str | None = None,
+    ytd: bool = False,
+    threshold_pct: float = 0.05,
+    threshold_abs: float = 25_000,
+    output_dir: str | None = None,
+) -> dict:
+    """Write the variance report to a formatted Excel workbook and return its path.
+
+    Tabs: Variance (live formulas, editable review thresholds), Revenue Bridge (ties back
+    to the Variance tab), By Division (region and consolidated only), Commentary, Checks.
+    Saves to output_dir if given, else FPA_EXPORT_DIR, else the repo's exports/ folder.
+    The export carries the report's status: a BLOCKED report says so on the first tab.
+    """
+    return export_report(
+        data(), level, name, period, ytd, Thresholds(threshold_pct, threshold_abs), output_dir
+    )
 
 
 @mcp.tool()

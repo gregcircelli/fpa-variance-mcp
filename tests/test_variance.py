@@ -72,3 +72,25 @@ def test_review_log(data):
 def test_bad_entity_raises(data):
     with pytest.raises(ValueError):
         data.actuals("division", "Boise", "2026-10")
+
+
+def test_excel_export(data, tmp_path):
+    from openpyxl import load_workbook
+
+    from fpa_variance_mcp.export import export_report
+
+    out = export_report(data, "region", "Southeast", "2026-10", output_dir=tmp_path)
+    assert out["sheets"] == ["Variance", "Revenue Bridge", "By Division", "Commentary", "Checks"]
+    wb = load_workbook(out["path"])
+    ws = wb["Variance"]
+    assert ws["A2"].value.startswith("Status: BLOCKED")
+    # Variances are formulas, not pasted values
+    assert ws["D9"].value == "=B9-C9"
+    assert wb["Checks"]["B5"].value == "FAIL"  # Charlotte's unmapped account
+
+
+def test_division_export_has_no_division_tab(data, tmp_path):
+    from fpa_variance_mcp.export import export_report
+
+    out = export_report(data, "division", "Houston", "2026-10", output_dir=tmp_path)
+    assert "By Division" not in out["sheets"]

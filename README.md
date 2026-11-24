@@ -19,6 +19,7 @@ There's also a trust problem. If one ERP books to a new account that hasn't been
 - **Drafts commentary.** Plain first-pass bullets with the numbers, the biggest movers, and whether a cost variance just tracks volume or is something else. Anything it can't know (the "why") is left as a placeholder for the business to fill in.
 - **Checks before anything goes out.** Every report runs a checks page: all GL accounts mapped, mapped actuals tie to the raw GL, divisions and regions roll up to consolidated. If a check fails, the report status is `BLOCKED`.
 - **Review gate.** Reports are always `DRAFT` until a reviewer signs off with `log_review`, which records who approved what against a report ID.
+- **Excel export.** `export_to_excel` writes the report to a formatted workbook: variances, subtotals, margins and review flags are live formulas, the review thresholds are editable inputs, the revenue bridge ties back to the variance tab, and region/consolidated exports add a by-division tab that ties to the total. A blocked report says so on the first tab.
 
 The AI client does the writing on top of the tool output. The tools do the numbers, so the numbers come from the data and not from the model.
 
@@ -30,6 +31,7 @@ The AI client does the writing on top of the tool output. The tools do the numbe
 | `get_actuals` / `get_budget` | Standard P&L for a division, region or consolidated, month or YTD |
 | `variance_report` | Variances, revenue bridge, flags, draft commentary, checks, status |
 | `run_checks` | The checks page on its own |
+| `export_to_excel` | Same report as a formatted .xlsx (Variance, Revenue Bridge, By Division, Commentary, Checks) |
 | `log_review` | Record an approval or a request for changes against a report |
 
 There's also a `monthly_variance_commentary` prompt that tells the client how to write the commentary from the report.
@@ -77,7 +79,9 @@ Add this to `claude_desktop_config.json` (Settings → Developer → Edit Config
 }
 ```
 
-Restart Claude Desktop, then ask something like "Write the October variance commentary for the Southeast region" or "Why is consolidated EBITDA flat when Houston missed?"
+Restart Claude Desktop, then ask something like "Write the October variance commentary for the Southeast region", "Why is consolidated EBITDA flat when Houston missed?" or "Export the Southeast October report to Excel."
+
+Exports go to the repo's `exports/` folder (git-ignored) unless you pass `output_dir` or set `FPA_EXPORT_DIR`.
 
 With Claude Code: `claude mcp add fpa-variance -- /full/path/to/.venv/bin/python -m fpa_variance_mcp.server`
 
@@ -86,6 +90,7 @@ With Claude Code: `claude mcp add fpa-variance -- /full/path/to/.venv/bin/python
 ```
 src/fpa_variance_mcp/
   variance.py      # the engine: pulls, variances, bridge, flags, commentary, checks, review log
+  export.py        # Excel export with live formulas
   server.py        # MCP tools over the engine
   sample_data.py   # synthetic multi-ERP dataset
 scripts/           # generate_data.py, demo.py
@@ -98,3 +103,4 @@ examples/          # sample output
 - A forecast scenario next to budget (latest estimate vs budget vs prior year)
 - Pulling the "why" from project-level data (which projects drove the hours miss)
 - Writing the approved commentary straight into the management package template
+- A mid-month flash estimate from partial-month hours
